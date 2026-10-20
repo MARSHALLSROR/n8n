@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PlacidWay Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef4f4; --panel:#ffffff; --ink:#12292d; --muted:#5b7276; --line:#d5e3e3;
+  --accent:#0b6e75; --accent-ink:#ffffff; --user:#12292d; --user-ink:#f1f7f7;
+  --chip:#e3f0f0; --err:#a43d2f;
+  --sans:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Fraunces',Georgia,'Times New Roman',serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0c1719; --panel:#122326; --ink:#e4f0f0; --muted:#8fa9ad; --line:#223a3e;
+    --accent:#4fb8bf; --accent-ink:#06191b; --user:#4fb8bf; --user-ink:#06191b; --chip:#183034; --err:#e58a7c; }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);display:flex;justify-content:center;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.app{width:100%;max-width:760px;height:100%;display:flex;flex-direction:column;background:var(--panel);
+  border-left:1px solid var(--line);border-right:1px solid var(--line)}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.mark{width:34px;height:34px;border-radius:50%;background:var(--accent);flex:none;position:relative}
+.mark::before,.mark::after{content:"";position:absolute;background:var(--accent-ink);border-radius:2px}
+.mark::before{left:15px;top:8px;width:4px;height:18px}
+.mark::after{left:8px;top:15px;width:18px;height:4px}
+header h1{font-size:1rem;font-weight:600;margin:0;line-height:1.2}
+header p{margin:0;font-size:.82rem;color:var(--muted)}
+header button{margin-left:auto}
+.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;
+  font:inherit;font-size:.85rem;cursor:pointer}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+main{flex:1;overflow-y:auto;padding:24px 20px;scroll-behavior:smooth}
+.hello{padding:8vh 0 12px}
+.hello h2{font:500 clamp(1.6rem,4.5vw,2.2rem)/1.2 var(--serif);margin:0 0 10px;max-width:20ch}
+.hello p{margin:0 0 22px;color:var(--muted);max-width:52ch}
+.starters{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.starters button{font:inherit;font-size:.95rem;text-align:left;color:var(--ink);background:var(--chip);
+  border:1px solid transparent;border-radius:12px;padding:10px 14px;cursor:pointer}
+.starters button:hover{border-color:var(--accent)}
+.msg{display:flex;margin:0 0 18px}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:88%}
+.user .bubble{background:var(--user);color:var(--user-ink);padding:10px 14px;border-radius:16px 16px 4px 16px;white-space:pre-wrap}
+.bot .bubble{max-width:100%}
+.bot .text p{margin:0 0 .7em}
+.bot .text ul{margin:0 0 .7em;padding-left:1.2em}
+.bot .text li{margin:.2em 0}
+.bot .text a{color:var(--accent);text-underline-offset:2px;word-break:break-word}
+.bot .text>:last-child{margin-bottom:0}
+.sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sources span{font-size:.82rem;color:var(--muted);align-self:center;margin-right:2px}
+.sources a{font-size:.82rem;font-weight:500;color:var(--ink);text-decoration:none;background:var(--chip);
+  border-radius:999px;padding:3px 11px;border:1px solid transparent}
+.sources a:hover{border-color:var(--accent)}
+.err .text{color:var(--err)}
+.typing{display:inline-flex;gap:5px;padding:8px 0}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}main{scroll-behavior:auto}}
+footer{padding:12px 20px 14px;border-top:1px solid var(--line)}
+form{display:flex;gap:10px;align-items:flex-end}
+textarea{flex:1;resize:none;max-height:140px;font:inherit;color:var(--ink);background:var(--bg);
+  border:1px solid var(--line);border-radius:12px;padding:10px 14px;line-height:1.4}
+textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+#send{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:0 18px;height:44px;
+  font:inherit;font-weight:600;cursor:pointer}
+#send:disabled{opacity:.5;cursor:not-allowed}
+#send:focus-visible,.ghost:focus-visible,.starters button:focus-visible,.sources a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{margin:8px 2px 0;font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="mark" aria-hidden="true"></div>
+    <div>
+      <h1>PlacidWay Assistant</h1>
+      <p>Answers come only from the ITC Immunity Therapy Center pages</p>
+    </div>
+    <button class="ghost" id="reset" type="button">New chat</button>
+  </header>
+
+  <main id="log" aria-live="polite">
+    <section class="hello" id="hello">
+      <h2>Ask about treatments, prices and packages</h2>
+      <p>I answer from PlacidWay’s own pages on ITC in Tijuana and link the page each answer comes from. If it isn’t there, I’ll say so.</p>
+      <div class="starters" id="starters"></div>
+    </section>
+  </main>
+
+  <footer>
+    <form id="form">
+      <textarea id="input" rows="1" placeholder="Type your question" aria-label="Your question" maxlength="1000"></textarea>
+      <button id="send" type="submit">Send</button>
+    </form>
+    <p class="note">General information only, not medical advice. Please talk to a doctor about your own case.</p>
+  </footer>
+</div>
+
+<script>
+// Leave webhookUrl empty when n8n serves this page (it posts to its own URL).
+// If you host the file elsewhere, paste your n8n production webhook URL here.
+const CONFIG = {
+  webhookUrl: '',
+  quoteUrl: 'https://www.placidway.com/request-info',
+  starters: [
+    'How much does cancer treatment cost at ITC in Tijuana?',
+    'What is included in the adenocarcinoma treatment package?',
+    'Which cancer types are on the ITC price list?',
+    'How do I request a free quote?'
+  ]
+};
+
+const $ = id => document.getElementById(id);
+const log = $('log'), input = $('input'), send = $('send');
+let busy = false;
+
+function newId(){ return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); }
+let sessionId;
+try { sessionId = localStorage.getItem('pw-session') || newId(); localStorage.setItem('pw-session', sessionId); }
+catch { sessionId = newId(); }
+
+// ---- rendering helpers (escape first, then add safe markup) ----
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function inline(s){
+  s = esc(s);
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]*[^\s<).,;:!?])/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+  return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+function render(text){
+  let html = '', list = false;
+  for (const line of text.split('\n')){
+    const li = line.match(/^\s*[-*\u2022]\s+(.*)/), h = line.match(/^#{1,4}\s+(.*)/);
+    if (li){ if(!list){ html += '<ul>'; list = true; } html += '<li>' + inline(li[1]) + '</li>'; continue; }
+    if (list){ html += '</ul>'; list = false; }
+    if (h) html += '<p><strong>' + inline(h[1]) + '</strong></p>';
+    else if (line.trim()) html += '<p>' + inline(line) + '</p>';
+  }
+  return html + (list ? '</ul>' : '');
+}
+const LABELS = { 'profile':'Clinic profile', 'package':'Treatment package', 'price-list':'Price list',
+  'profile-videos':'Clinic videos', 'search-medical-pricings':'Price comparison', 'request-info':'Free quote', 'rfi':'Free quote' };
+function sourcesOf(text){
+  const urls = [...new Set((text.match(/https?:\/\/[^\s)\]<>"']+/g) || []).map(u => u.replace(/[.,;:!?]+$/, '')))];
+  return urls.slice(0, 4).map(u => {
+    try { const p = new URL(u).pathname.split('/').filter(Boolean); return { u, label: LABELS[p[0]] || new URL(u).hostname }; }
+    catch { return null; }
+  }).filter(Boolean);
+}
+
+function add(role, html, extra = ''){
+  const m = document.createElement('div');
+  m.className = 'msg ' + role + ' ' + extra;
+  m.innerHTML = '<div class="bubble">' + html + '</div>';
+  log.appendChild(m); log.scrollTop = log.scrollHeight;
+  return m;
+}
+function addBot(text, isErr){
+  const src = isErr ? [] : sourcesOf(text);
+  const chips = src.length ? '<div class="sources"><span>Sources</span>' +
+    src.map(s => '<a href="' + esc(s.u) + '" target="_blank" rel="noopener noreferrer">' + esc(s.label) + '</a>').join('') + '</div>' : '';
+  return add('bot', '<div class="text">' + render(text) + '</div>' + chips, isErr ? 'err' : '');
+}
+
+// ---- sending ----
+async function ask(text){
+  text = text.trim(); if (!text || busy) return;
+  busy = true; send.disabled = true;
+  $('hello')?.remove();
+  add('user', esc(text));
+  const wait = add('bot', '<div class="typing" aria-label="Assistant is typing"><i></i><i></i><i></i></div>');
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 60000);
+  try {
+    const res = await fetch(CONFIG.webhookUrl || location.href.split(/[?#]/)[0], {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+      body: JSON.stringify({ action: 'sendMessage', sessionId, chatInput: text })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.text(); let data;
+    try { data = JSON.parse(raw); } catch { data = { output: raw }; }
+    if (Array.isArray(data)) data = data[0] || {};
+    const reply = data.output ?? data.text ?? data.message;
+    if (!reply) throw new Error('Empty reply');
+    wait.remove(); addBot(String(reply));
+  } catch (e) {
+    wait.remove();
+    addBot('The assistant could not answer just now. Please try again in a moment, or request a free quote at ' + CONFIG.quoteUrl, true);
+    console.error(e);
+  } finally { clearTimeout(timer); busy = false; send.disabled = false; input.focus(); }
+}
+
+$('form').addEventListener('submit', e => { e.preventDefault(); const t = input.value; input.value = ''; fit(); ask(t); });
+input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('form').requestSubmit(); } });
+function fit(){ input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; }
+input.addEventListener('input', fit);
+
+CONFIG.starters.forEach(q => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = q;
+  b.addEventListener('click', () => ask(q)); $('starters').appendChild(b);
+});
+$('reset').addEventListener('click', () => {
+  sessionId = newId();
+  try { localStorage.setItem('pw-session', sessionId); } catch {}
+  location.reload();
+});
+</script>
+</body>
+</html>

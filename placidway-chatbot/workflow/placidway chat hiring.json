@@ -1,0 +1,685 @@
+{
+  "name": "placidway chat hiring",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        -720
+      ],
+      "id": "a4551542-c8c0-445f-a33a-9c0f641f0c33",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "pages",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        -976,
+        -720
+      ],
+      "id": "ea24a238-0cd4-41a0-8123-085d47177f03",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"pages\": [\n    {\"page_type\": \"clinic_profile\", \"url\": \"https://www.placidway.com/profile/5/Alternative-Cancer-Treatment-by-ITC-Immunity-Therapy-Center\"},\n    {\"page_type\": \"package\", \"url\": \"https://www.placidway.com/package/7903/Alternative-Adenocarcinoma-Cancer-Treatment-Package-in-Tijuana-Mexico-by-ITC\"},\n    {\"page_type\": \"package\", \"url\": \"https://www.placidway.com/package/7902/Alternative-Adrenal-Cancer-Treatment-Package-in-Tijuana-Mexico-by-ITC\"},\n    {\"page_type\": \"package\", \"url\": \"https://www.placidway.com/package/7901/Alternative-Anal-Cancer-Treatment-Package-in-Tijuana-Mexico-by-ITC\"},\n    {\"page_type\": \"clinic_videos\", \"url\": \"https://www.placidway.com/profile-videos/5/Alternative-Cancer-Treatment-by-ITC-Immunity-Therapy-Center\"},\n    {\"page_type\": \"price_list\", \"url\": \"https://www.placidway.com/price-list/5/Alternative-Cancer-Treatment-by-ITC-Immunity-Therapy-Center\"},\n    {\"page_type\": \"price_comparison\", \"url\": \"https://www.placidway.com/search-medical-pricings/Alternative-Medicine/All/1\"}\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1200,
+        -720
+      ],
+      "id": "7b772037-3169-420e-bcf5-3469f3cf462f",
+      "name": "urls"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -752,
+        -720
+      ],
+      "id": "5b47a336-6f3a-40ad-bcbc-deea34caa1af",
+      "name": "data from urls"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": "title"
+            },
+            {
+              "key": "content",
+              "cssSelector": "main",
+              "returnValue": "html"
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        -720
+      ],
+      "id": "d2577987-4719-446e-8b5f-0bb79b6584d4",
+      "name": "extract html"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.content }}",
+        "destinationKey": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        -720
+      ],
+      "id": "75a0187a-2736-4539-a911-2e596fa97165",
+      "name": "html > md"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c4fbe8c-fb33-4c7c-91b2-ca7e09677225",
+              "name": "url",
+              "value": "={{ $('Split Out').item.json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "6fa78544-1206-4fe6-bdf9-60b295afb74f",
+              "name": "page_type",
+              "value": "={{ $('Split Out').item.json.page_type }}",
+              "type": "string"
+            },
+            {
+              "id": "5bd6bdc4-925d-4532-a255-801701f51e7f",
+              "name": "text",
+              "value": "={{ $json.text.split('Request your Free Quote')[0].replace(/^[\\s\\S]*?(?=\\n## )/, '').replace(/!\\[[^\\]]*\\]\\([^)]*\\)/g, '').replace(/\\[([^\\]]*)\\]\\([^)]*\\)/g, '$1').replace(/\\n{3,}/g, '\\n\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -80,
+        -720
+      ],
+      "id": "0d295c9e-0a4e-484b-99c2-41f7c4b94ee1",
+      "name": "md details"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "url",
+                "value": "={{ $json.url }}"
+              },
+              {
+                "name": "page_type",
+                "value": "={{ $json.page_type }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        -496
+      ],
+      "id": "b941607d-33dd-47ae-872b-4b1f71c63905",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_documents",
+          "mode": "list",
+          "cachedResultName": "rag_documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        -720
+      ],
+      "id": "036abda1-75af-4182-b7ff-5efd7ac58012",
+      "name": "inserting data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "pnfnlNhq3w5ff3Nt",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -288
+      ],
+      "id": "1c537ef9-b41a-409d-ad75-02c8ada7f591",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -496
+      ],
+      "id": "37943edc-652d-46c7-80a0-8ddcf35fcc52",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "YQRV6Jvpjtvht9ta",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## inserting data",
+        "height": 944,
+        "width": 1960,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        -1088
+      ],
+      "id": "013bd224-1cf3-4f7b-bc04-867500b9de73",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "285c562f-38fb-40db-9422-648f34ac47dc",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        64
+      ],
+      "webhookId": "5b9d7a10-6c2e-4d1a-9f10-placidwaychat01",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "13f53445-9bb6-4bc9-bc1d-dd7d1662a0c6",
+      "name": "Mistral Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        496
+      ],
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "YQRV6Jvpjtvht9ta",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "You are the official PlacidWay website assistant for ITC Immunity Therapy Center in Tijuana. Your primary goal is to provide precise, truthful answers based strictly on the retrieved search passages.\n\n### Core Rules & Instructions:\n1. **Mandatory Search:** For every question about treatments, packages, prices, clinic details, inclusions, or procedures, use the search tool first. Never rely solely on internal parametric memory.\n2. **Exhaustive Multi-Entity Search (Crucial for Comparisons):** When a user asks to compare two items (e.g., \"Is lung cancer treatment cheaper than prostate cancer treatment?\"), you must search for and verify data for **both** entities. If your initial search results only return information for one entity, you must use the search tool a second time specifically targeting the missing entity before telling the user it is unavailable.\n3. **Exhaustive Content Inspection:** Before telling a user you cannot find information (such as package inclusions or comparative pricing), carefully inspect ALL retrieved passages for general price lists, baseline package costs, or alternative tiers. Do not give up prematurely.\n4. **Strict Grounding:** Use only facts explicitly stated in the retrieved passages. Never invent, estimate, or extrapolate prices, package inclusions, doctors, durations, or medical outcomes.\n5. **Source Attribution:** End every factual answer with the exact source page URL(s) used, formatted clearly on their own line as 'Source: https://...'. Only cite URLs present in the tool results.\n6. **Handling Missing Details:** If a specific detail is genuinely absent from all retrieved chunks after a thorough search, explicitly state that the information is not listed on the page and direct the user to request a free quote: https://www.placidway.com/request-info\n7. **Price & Package Clarity:** State exact prices with currency and full context (e.g., whether it applies to out-patient or in-patient tiers). Do not add words like \"starting from\" unless the page explicitly uses them.\n8. **Comparisons:** Compare treatments or costs only when data for both sides is retrieved. If both packages share the same baseline or starting price (e.g., both listed at $18,995), explicitly state that they cost the same rather than claiming pricing is missing.\n9. **Medical Advice Boundaries:** Never diagnose, assess whether a treatment is safe/suitable for an individual's specific medical condition, or promise outcomes. Recommend that the user consult their personal physician. Do not treat testimonials as clinical proof.\n10. **Out-of-Scope & Limitations:** You cannot book appointments, take payments, or contact clinics directly. Direct users looking to take action to the free quote form: https://www.placidway.com/request-info. Politely decline unrelated topics (e.g., weather, general knowledge).\n11. **Tone & Formatting:** Keep responses short, clear, and friendly. Use short paragraphs or bullet points (`- `). Avoid large structural headings. Match the user's language while keeping URLs unchanged."
+        }
+      },
+      "id": "7b2947f4-55eb-49af-86d6-6080f61519b7",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -624,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"output\": $json.output } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "58fe611b-ceca-4455-bf2c-b3404e109a01",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -176,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>PlacidWay Assistant</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500&display=swap\" rel=\"stylesheet\">\n<style>\n:root{\n  --bg:#eef4f4; --panel:#ffffff; --ink:#12292d; --muted:#5b7276; --line:#d5e3e3;\n  --accent:#0b6e75; --accent-ink:#ffffff; --user:#12292d; --user-ink:#f1f7f7;\n  --chip:#e3f0f0; --err:#a43d2f;\n  --sans:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;\n  --serif:'Fraunces',Georgia,'Times New Roman',serif;\n}\n@media (prefers-color-scheme:dark){\n  :root{ --bg:#0c1719; --panel:#122326; --ink:#e4f0f0; --muted:#8fa9ad; --line:#223a3e;\n    --accent:#4fb8bf; --accent-ink:#06191b; --user:#4fb8bf; --user-ink:#06191b; --chip:#183034; --err:#e58a7c; }\n}\n*{box-sizing:border-box}\nhtml,body{height:100%;margin:0}\nbody{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);display:flex;justify-content:center;\n  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}\n.app{width:100%;max-width:760px;height:100%;display:flex;flex-direction:column;background:var(--panel);\n  border-left:1px solid var(--line);border-right:1px solid var(--line)}\nheader{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}\n.mark{width:34px;height:34px;border-radius:50%;background:var(--accent);flex:none;position:relative}\n.mark::before,.mark::after{content:\"\";position:absolute;background:var(--accent-ink);border-radius:2px}\n.mark::before{left:15px;top:8px;width:4px;height:18px}\n.mark::after{left:8px;top:15px;width:18px;height:4px}\nheader h1{font-size:1rem;font-weight:600;margin:0;line-height:1.2}\nheader p{margin:0;font-size:.82rem;color:var(--muted)}\nheader button{margin-left:auto}\n.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;\n  font:inherit;font-size:.85rem;cursor:pointer}\n.ghost:hover{color:var(--ink);border-color:var(--muted)}\nmain{flex:1;overflow-y:auto;padding:24px 20px;scroll-behavior:smooth}\n.hello{padding:8vh 0 12px}\n.hello h2{font:500 clamp(1.6rem,4.5vw,2.2rem)/1.2 var(--serif);margin:0 0 10px;max-width:20ch}\n.hello p{margin:0 0 22px;color:var(--muted);max-width:52ch}\n.starters{display:flex;flex-direction:column;align-items:flex-start;gap:8px}\n.starters button{font:inherit;font-size:.95rem;text-align:left;color:var(--ink);background:var(--chip);\n  border:1px solid transparent;border-radius:12px;padding:10px 14px;cursor:pointer}\n.starters button:hover{border-color:var(--accent)}\n.msg{display:flex;margin:0 0 18px}\n.msg.user{justify-content:flex-end}\n.bubble{max-width:88%}\n.user .bubble{background:var(--user);color:var(--user-ink);padding:10px 14px;border-radius:16px 16px 4px 16px;white-space:pre-wrap}\n.bot .bubble{max-width:100%}\n.bot .text p{margin:0 0 .7em}\n.bot .text ul{margin:0 0 .7em;padding-left:1.2em}\n.bot .text li{margin:.2em 0}\n.bot .text a{color:var(--accent);text-underline-offset:2px;word-break:break-word}\n.bot .text>:last-child{margin-bottom:0}\n.sources{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}\n.sources span{font-size:.82rem;color:var(--muted);align-self:center;margin-right:2px}\n.sources a{font-size:.82rem;font-weight:500;color:var(--ink);text-decoration:none;background:var(--chip);\n  border-radius:999px;padding:3px 11px;border:1px solid transparent}\n.sources a:hover{border-color:var(--accent)}\n.err .text{color:var(--err)}\n.typing{display:inline-flex;gap:5px;padding:8px 0}\n.typing i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:b 1.2s infinite ease-in-out}\n.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}\n@keyframes b{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}\n@media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.6}main{scroll-behavior:auto}}\nfooter{padding:12px 20px 14px;border-top:1px solid var(--line)}\nform{display:flex;gap:10px;align-items:flex-end}\ntextarea{flex:1;resize:none;max-height:140px;font:inherit;color:var(--ink);background:var(--bg);\n  border:1px solid var(--line);border-radius:12px;padding:10px 14px;line-height:1.4}\ntextarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}\n#send{background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;padding:0 18px;height:44px;\n  font:inherit;font-weight:600;cursor:pointer}\n#send:disabled{opacity:.5;cursor:not-allowed}\n#send:focus-visible,.ghost:focus-visible,.starters button:focus-visible,.sources a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}\n.note{margin:8px 2px 0;font-size:.78rem;color:var(--muted)}\n</style>\n</head>\n<body>\n<div class=\"app\">\n  <header>\n    <div class=\"mark\" aria-hidden=\"true\"></div>\n    <div>\n      <h1>PlacidWay Assistant</h1>\n      <p>Answers come only from the ITC Immunity Therapy Center pages</p>\n    </div>\n    <button class=\"ghost\" id=\"reset\" type=\"button\">New chat</button>\n  </header>\n\n  <main id=\"log\" aria-live=\"polite\">\n    <section class=\"hello\" id=\"hello\">\n      <h2>Ask about treatments, prices and packages</h2>\n      <p>I answer from PlacidWay’s own pages on ITC in Tijuana and link the page each answer comes from. If it isn’t there, I’ll say so.</p>\n      <div class=\"starters\" id=\"starters\"></div>\n    </section>\n  </main>\n\n  <footer>\n    <form id=\"form\">\n      <textarea id=\"input\" rows=\"1\" placeholder=\"Type your question\" aria-label=\"Your question\" maxlength=\"1000\"></textarea>\n      <button id=\"send\" type=\"submit\">Send</button>\n    </form>\n    <p class=\"note\">General information only, not medical advice. Please talk to a doctor about your own case.</p>\n  </footer>\n</div>\n\n<script>\n// Leave webhookUrl empty when n8n serves this page (it posts to its own URL).\n// If you host the file elsewhere, paste your n8n production webhook URL here.\nconst CONFIG = {\n  webhookUrl: '',\n  quoteUrl: 'https://www.placidway.com/request-info',\n  starters: [\n    'How much does cancer treatment cost at ITC in Tijuana?',\n    'What is included in the adenocarcinoma treatment package?',\n    'Which cancer types are on the ITC price list?',\n    'How do I request a free quote?'\n  ]\n};\n\nconst $ = id => document.getElementById(id);\nconst log = $('log'), input = $('input'), send = $('send');\nlet busy = false;\n\nfunction newId(){ return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); }\nlet sessionId;\ntry { sessionId = localStorage.getItem('pw-session') || newId(); localStorage.setItem('pw-session', sessionId); }\ncatch { sessionId = newId(); }\n\n// ---- rendering helpers (escape first, then add safe markup) ----\nconst esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');\nfunction inline(s){\n  s = esc(s);\n  s = s.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g, '<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>');\n  s = s.replace(/(^|[\\s(])(https?:\\/\\/[^\\s<)]*[^\\s<).,;:!?])/g, '$1<a href=\"$2\" target=\"_blank\" rel=\"noopener noreferrer\">$2</a>');\n  return s.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');\n}\nfunction render(text){\n  let html = '', list = false;\n  for (const line of text.split('\\n')){\n    const li = line.match(/^\\s*[-*\\u2022]\\s+(.*)/), h = line.match(/^#{1,4}\\s+(.*)/);\n    if (li){ if(!list){ html += '<ul>'; list = true; } html += '<li>' + inline(li[1]) + '</li>'; continue; }\n    if (list){ html += '</ul>'; list = false; }\n    if (h) html += '<p><strong>' + inline(h[1]) + '</strong></p>';\n    else if (line.trim()) html += '<p>' + inline(line) + '</p>';\n  }\n  return html + (list ? '</ul>' : '');\n}\nconst LABELS = { 'profile':'Clinic profile', 'package':'Treatment package', 'price-list':'Price list',\n  'profile-videos':'Clinic videos', 'search-medical-pricings':'Price comparison', 'request-info':'Free quote', 'rfi':'Free quote' };\nfunction sourcesOf(text){\n  const urls = [...new Set((text.match(/https?:\\/\\/[^\\s)\\]<>\"']+/g) || []).map(u => u.replace(/[.,;:!?]+$/, '')))];\n  return urls.slice(0, 4).map(u => {\n    try { const p = new URL(u).pathname.split('/').filter(Boolean); return { u, label: LABELS[p[0]] || new URL(u).hostname }; }\n    catch { return null; }\n  }).filter(Boolean);\n}\n\nfunction add(role, html, extra = ''){\n  const m = document.createElement('div');\n  m.className = 'msg ' + role + ' ' + extra;\n  m.innerHTML = '<div class=\"bubble\">' + html + '</div>';\n  log.appendChild(m); log.scrollTop = log.scrollHeight;\n  return m;\n}\nfunction addBot(text, isErr){\n  const src = isErr ? [] : sourcesOf(text);\n  const chips = src.length ? '<div class=\"sources\"><span>Sources</span>' +\n    src.map(s => '<a href=\"' + esc(s.u) + '\" target=\"_blank\" rel=\"noopener noreferrer\">' + esc(s.label) + '</a>').join('') + '</div>' : '';\n  return add('bot', '<div class=\"text\">' + render(text) + '</div>' + chips, isErr ? 'err' : '');\n}\n\n// ---- sending ----\nasync function ask(text){\n  text = text.trim(); if (!text || busy) return;\n  busy = true; send.disabled = true;\n  $('hello')?.remove();\n  add('user', esc(text));\n  const wait = add('bot', '<div class=\"typing\" aria-label=\"Assistant is typing\"><i></i><i></i><i></i></div>');\n  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 60000);\n  try {\n    const res = await fetch(CONFIG.webhookUrl || location.href.split(/[?#]/)[0], {\n      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,\n      body: JSON.stringify({ action: 'sendMessage', sessionId, chatInput: text })\n    });\n    if (!res.ok) throw new Error('HTTP ' + res.status);\n    const raw = await res.text(); let data;\n    try { data = JSON.parse(raw); } catch { data = { output: raw }; }\n    if (Array.isArray(data)) data = data[0] || {};\n    const reply = data.output ?? data.text ?? data.message;\n    if (!reply) throw new Error('Empty reply');\n    wait.remove(); addBot(String(reply));\n  } catch (e) {\n    wait.remove();\n    addBot('The assistant could not answer just now. Please try again in a moment, or request a free quote at ' + CONFIG.quoteUrl, true);\n    console.error(e);\n  } finally { clearTimeout(timer); busy = false; send.disabled = false; input.focus(); }\n}\n\n$('form').addEventListener('submit', e => { e.preventDefault(); const t = input.value; input.value = ''; fit(); ask(t); });\ninput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); $('form').requestSubmit(); } });\nfunction fit(){ input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; }\ninput.addEventListener('input', fit);\n\nCONFIG.starters.forEach(q => {\n  const b = document.createElement('button'); b.type = 'button'; b.textContent = q;\n  b.addEventListener('click', () => ask(q)); $('starters').appendChild(b);\n});\n$('reset').addEventListener('click', () => {\n  sessionId = newId();\n  try { localStorage.setItem('pw-session', sessionId); } catch {}\n  location.reload();\n});\n</script>\n</body>\n</html>\n",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "34420fa8-df49-4181-b076-89d39071b7d2",
+      "name": "Serve chat page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -560,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -576,
+        320
+      ],
+      "id": "8cf8de77-038c-4426-8daa-ba973b968a3d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "content": "## Querying stage",
+        "height": 784,
+        "width": 1968,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        -144
+      ],
+      "id": "e8289900-a55f-446f-88c9-b3b4f84749ca",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "model": "gemma4:31b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        320
+      ],
+      "id": "58c19687-e335-4ecd-9db5-3b11f255a2e3",
+      "name": "gemma model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "mUNqfmE1g6FQS0IN",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the PlacidWay pages about ITC Immunity Therapy Center in Tijuana: prices, treatment packages, what is included, clinic details, videos and price comparisons. Returns passages with their source URL.",
+        "tableName": {
+          "__rl": true,
+          "value": "rag_documents",
+          "mode": "list",
+          "cachedResultName": "rag_documents"
+        },
+        "topK": 10,
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "11bc8662-8307-47e7-8f94-72198399febf",
+      "name": "querying data",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        304
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "pnfnlNhq3w5ff3Nt",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "test2526.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-US,en;q=0.7",
+            "authorization": "Basic cGxhY2lkY2FyZTpwbGFjaWRjYXJlMjUyNg==",
+            "cache-control": "max-age=0",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "156.206.181.2",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "EG",
+            "cf-ray": "a4d78de91d94e1f1-MRS",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "cookie": "rl_page_init_referrer=%22%24direct%22; rl_anonymous_id=RudderEncrypt%3AU2FsdGVkX19SsSiBYvjsfTV8%2BCE60A2voGvcxuacqWHCdvoPDRAV6Nu%2By%2FtIQBibmgkPOZ5hFyWVJEnGRnaNeQ%3D%3D; rl_user_id=RudderEncrypt%3AU2FsdGVkX1%2BiFzPkW2nfgTy8QHCphXpuuhqV38vIzTXkT3W8V1qwy9unSLVXJn%2Bv9JQJxNaFMeP8XoRN7xVcqpNleVYT9%2B3vlzTk42RUKGm7N3%2BqM3dOhZ6MXbpgW4QasJ1IwAc2YZTxucdX64mMxhyWkbC4uC1oyCdhzKVpXfk%3D; rl_trait=RudderEncrypt%3AU2FsdGVkX186IN7%2Fn0swTYfWS0sutNtn127u9Cs9rhhrwBI6rZQZksUb4qZWH3ODY8bblCpIZEQnVZXsUmh9YxjOc6Yvzs624N4GkLV7VvOhlFpOtX4pdu91BATPvJkh2RVilckogdLvIeZqDvuYMaPSsgORD49nzyXO%2Bj3U10uI3QlYfJr5hmZQ2jUaUA91WeYUC5SeJTP3Vy5YyGGZAdxNGuBDOijlXMEuriZUMaA%3D; n8n_anonymous_id=4c22a6b6-ab26-4d3a-82ec-a5ad2245c76b; ph_phc_kMstNfAgBcBkWSh6KdsgN09heqqNe5VNmalHP1Ni9Q4_posthog=%7B%22%24device_id%22%3A%2201a158fa-71e6-7a65-b37c-0e7f4ad05f85%22%2C%22distinct_id%22%3A%22cebb851d9719a6fff16a5d7fa3425eb676c210216d34d2c3ed4ae0c51425e454%235c9b0fb4-e62c-42b6-93f3-cdfaaafa47a7%22%2C%22%24sesid%22%3A%5B1792494387464%2C%2201a158a8-289e-7b6b-a49e-3f65e17bbab7%22%2C1792488777882%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22https%3A%2F%2Ftest2526.app.n8n.cloud%2F%22%7D%2C%22%24user_state%22%3A%22identified%22%7D; rl_session=RudderEncrypt%3AU2FsdGVkX19fbWA8omyd3Loe0YT81j3Q3ZLUbpiEDpwAvsVpK4t7c8SlghH6COvXjLPAOGnsHlwzwlTW3mAfkmnln3E0jSjo%2BszlVZN%2FnxP%2F%2B4GiDJjEuMNHSjnmRvpaQTZojbH9xV40NJLiJgP7HQ%3D%3D",
+            "dnt": "1",
+            "if-none-match": "W/\"2bf7-QXfUgKyRds++HA4qIuerlKxvhMo\"",
+            "priority": "u=0, i",
+            "sec-ch-ua": "\"Brave\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Linux\"",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "cross-site",
+            "sec-fetch-user": "?1",
+            "sec-gpc": "1",
+            "upgrade-insecure-requests": "1",
+            "x-forwarded-for": "156.206.181.2, 172.70.108.221",
+            "x-forwarded-host": "test2526.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-swc-22-66db9c6b55-tm98x",
+            "x-is-trusted": "yes",
+            "x-real-ip": "156.206.181.2"
+          },
+          "params": {},
+          "query": {},
+          "body": {},
+          "webhookUrl": "https://test2526.app.n8n.cloud/webhook/chat",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "urls": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "data from urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data from urls": {
+      "main": [
+        [
+          {
+            "node": "extract html",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract html": {
+      "main": [
+        [
+          {
+            "node": "html > md",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html > md": {
+      "main": [
+        [
+          {
+            "node": "md details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "inserting data",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "md details": {
+      "main": [
+        [
+          {
+            "node": "inserting data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inserting data": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "inserting data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Serve chat page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "querying data",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gemma model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "querying data": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f27006b5-d9bb-4a4d-904b-039ac275e896",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cebb851d9719a6fff16a5d7fa3425eb676c210216d34d2c3ed4ae0c51425e454"
+  },
+  "nodeGroups": [],
+  "id": "URBveuS0pHeE1v26",
+  "tags": []
+}
